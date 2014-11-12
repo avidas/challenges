@@ -113,7 +113,7 @@ class ProblemFolder(object):
 
         # check if python file exists: if it doesn't, create it
         if force or not os.access(python_path, os.F_OK):
-            problem.to_python_file(python_path)
+            problem.to_python_file(python_path, "class")
 
         # create init file, if it doesn't exist
         if force or not os.access(init_path, os.F_OK):
@@ -136,7 +136,7 @@ class ProblemFolder(object):
 
         return len(problems_to_delete)
 
-    def test_problems(self, problems):
+    def test_problems(self, problems, template_type="class"):
         """Given a list of problem tuples (rel_path, number, name), runs the tests
         for each problem.
         Uses the method provided in the Python file in the problem directory."""
@@ -152,13 +152,17 @@ class ProblemFolder(object):
             python_file = open(python_filename, 'rU')
             exec python_file in ns
             python_file.close()
-            
+
             # get method
-            method = ns[problem[P_PROBLEM_DEFINITION]['method']]
+            if template_type == "class":
+                cls = ns[problem[P_PROBLEM_DEFINITION]['class']]
+                method = getattr(cls(), problem[P_PROBLEM_DEFINITION]['method'])
+            elif template_type == "method":
+                method = ns[problem[P_PROBLEM_DEFINITION]['method']]
 
             # run tests
             problem.test_method(method)
-        
+
     def clean(self):
         """Refreshes and re-scans the directory for problems, as well as re-creating missing files.
         The difference between this and __init__ is that this removes all directories that contain
